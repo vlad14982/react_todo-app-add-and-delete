@@ -1,6 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 import { Todo } from '../types/Todo';
+import { TodoFilter } from '../enums/TodoFilter';
 
 interface TodoFooterProps {
   todos: Todo[];
@@ -31,10 +32,10 @@ const TodoFooter: React.FC<TodoFooterProps> = ({
             <a
               href="#/"
               className={classNames('filter__link', {
-                selected: filter === 'all',
+                selected: filter === TodoFilter.ALL,
               })}
               data-cy="FilterLinkAll"
-              onClick={() => onFilterChange('all')}
+              onClick={() => onFilterChange(TodoFilter.ALL)}
             >
               All
             </a>
@@ -42,10 +43,10 @@ const TodoFooter: React.FC<TodoFooterProps> = ({
             <a
               href="#/active"
               className={classNames('filter__link', {
-                selected: filter === 'active',
+                selected: filter === TodoFilter.ACTIVE,
               })}
               data-cy="FilterLinkActive"
-              onClick={() => onFilterChange('active')}
+              onClick={() => onFilterChange(TodoFilter.ACTIVE)}
             >
               Active
             </a>
@@ -53,10 +54,10 @@ const TodoFooter: React.FC<TodoFooterProps> = ({
             <a
               href="#/completed"
               className={classNames('filter__link', {
-                selected: filter === 'completed',
+                selected: filter === TodoFilter.COMPLETED,
               })}
               data-cy="FilterLinkCompleted"
-              onClick={() => onFilterChange('completed')}
+              onClick={() => onFilterChange(TodoFilter.COMPLETED)}
             >
               Completed
             </a>

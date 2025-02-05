@@ -7,17 +7,23 @@ import { TodoHeader } from './components/TodoHeader';
 import { TodoList } from './components/TodoList';
 import TodoFooter from './components/TodoFooter';
 import { ErrorNotification } from './components/ErrorNotification';
+import { TodoFilter } from './enums/TodoFilter';
 
 type Filter = 'all' | 'active' | 'completed';
 
 export const App: React.FC = () => {
-  const [loading, setLoading] = useState(false);
+  // eslint-disable-next-line max-len
+  const [loadingTodos, setLoadingTodos] = useState<{ [key: number]: boolean }>(
+    {},
+  );
   const [todos, setTodos] = useState<Todo[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [isActive] = useState<number>();
   const [isInputDisabled, setIsInputDisabled] = useState(false);
-  const [filter, setFilter] = useState<Filter>('all');
+  const [filter, setFilter] = useState<Filter>(TodoFilter.ALL);
   const [tempTodo, setTempTodo] = useState<Todo | null>(null);
+
+  const isAnyLoading = Object.values(loadingTodos).some(isLoading => isLoading);
 
   // #region inputFocus
   const inputRef = useRef<HTMLInputElement>(null);
@@ -54,11 +60,11 @@ export const App: React.FC = () => {
 
   // #region filter
   const filteredTodos = todos.filter(todo => {
-    if (filter === 'active') {
+    if (filter === TodoFilter.ACTIVE) {
       return !todo.completed;
     }
 
-    if (filter === 'completed') {
+    if (filter === TodoFilter.COMPLETED) {
       return todo.completed;
     }
 
@@ -99,7 +105,7 @@ export const App: React.FC = () => {
   }
 
   function deleteTodo(id: number) {
-    setLoading(true);
+    setLoadingTodos(prev => ({ ...prev, [id]: true }));
 
     return postService
       .deleteTodo(id)
@@ -107,38 +113,49 @@ export const App: React.FC = () => {
         setTodos(currentTodos => currentTodos.filter(todo => todo.id !== id));
       })
       .catch(error => {
-        setErrorMessage(`Unable to delete a todo`);
+        setErrorMessage('Unable to delete a todo');
         throw error;
       })
       .finally(() => {
-        setLoading(false);
+        setLoadingTodos(prev => ({ ...prev, [id]: false }));
         inputfocus();
       });
   }
 
-  const clearCompletedTodos = () => {
-    setLoading(true);
-    const completedTodos = todos.filter(todo => todo.completed);
-    const deletePromises = completedTodos.map(todo => deleteTodo(todo.id));
+  const clearCompletedTodos = async () => {
+    const completedTodoIds = todos
+      .filter(todo => todo.completed)
+      .map(todo => todo.id);
 
-    Promise.all(deletePromises)
-      .then(() => {
-        setTodos(currentTodos => currentTodos.filter(todo => !todo.completed));
-      })
-      .catch(() => {
-        setErrorMessage('Unable to delete a todo');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    setLoadingTodos(prev =>
+      completedTodoIds.reduce((acc, id) => ({ ...acc, [id]: true }), prev),
+    );
+
+    const successfulDeletions: number[] = [];
+
+    await Promise.all(
+      completedTodoIds.map(async id => {
+        try {
+          await postService.deleteTodo(id);
+          successfulDeletions.push(id);
+        } catch {
+          setErrorMessage('Unable to delete a todo');
+        }
+      }),
+    );
+
+    setTodos(currentTodos =>
+      currentTodos.filter(todo => !successfulDeletions.includes(todo.id)),
+    );
+
+    setLoadingTodos(prev =>
+      completedTodoIds.reduce((acc, id) => ({ ...acc, [id]: false }), prev),
+    );
+
+    inputfocus();
   };
 
   //#endregion
-
-  // if (!USER_ID) {
-  //   return <UserWarning />;
-  // }
-
   // #region errorMessage
   useEffect(() => {
     if (errorMessage) {
@@ -163,7 +180,7 @@ export const App: React.FC = () => {
 
       <div className="todoapp__content">
         <TodoHeader
-          loading={loading}
+          loading={isAnyLoading}
           isInputDisabled={isInputDisabled}
           todosLeft={todosLeft}
           onSubmit={addPost}
@@ -173,7 +190,7 @@ export const App: React.FC = () => {
 
         <TodoList
           filteredTodos={filteredTodos}
-          loading={loading}
+          loadingTodos={loadingTodos}
           isActive={isActive}
           onDelete={deleteTodo}
           tempTodo={tempTodo}
@@ -184,7 +201,7 @@ export const App: React.FC = () => {
           todosLeft={todosLeft}
           filter={filter}
           onFilterChange={handleFilterChange}
-          loading={loading}
+          loading={isAnyLoading}
           clearCompletedTodos={clearCompletedTodos}
         />
       </div>
