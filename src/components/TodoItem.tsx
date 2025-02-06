@@ -12,7 +12,7 @@ interface TodoItemProps {
 }
 
 export const TodoItem: React.FC<TodoItemProps> = ({
-  todo,
+  todo: { id, title, completed },
   loading,
   isActive,
   onDelete,
@@ -21,35 +21,35 @@ export const TodoItem: React.FC<TodoItemProps> = ({
     <div
       data-cy="Todo"
       className={classNames('todo', {
-        completed: todo.completed,
+        completed: completed,
       })}
-      key={todo.id}
+      key={id}
     >
       <label className="todo__status-label">
         <input
           data-cy="TodoStatus"
           type="checkbox"
           className="todo__status"
-          checked={todo.completed}
+          checked={completed}
           disabled={loading}
         />
       </label>
 
-      {todo.id === isActive ? (
+      {id === isActive ? (
         <form>
           <input
             data-cy="TodoTitleField"
             type="text"
             className="todo__title-field"
             placeholder="Empty todo will be deleted"
-            value={todo.title}
+            value={title}
             onChange={() => {}}
           />
         </form>
       ) : (
         <>
           <span data-cy="TodoTitle" className="todo__title">
-            {todo.title}
+            {title}
           </span>
 
           {/* Remove button appears only on hover */}
@@ -57,7 +57,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             type="button"
             className="todo__remove"
             data-cy="TodoDelete"
-            onClick={() => onDelete(todo.id)}
+            onClick={() => onDelete(id)}
             disabled={loading}
           >
             ×

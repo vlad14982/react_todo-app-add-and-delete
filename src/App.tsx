@@ -5,11 +5,11 @@ import * as postService from './api/todos';
 import { Todo } from './types/Todo';
 import { TodoHeader } from './components/TodoHeader';
 import { TodoList } from './components/TodoList';
-import TodoFooter from './components/TodoFooter';
+import { TodoFooter } from './components/TodoFooter';
 import { ErrorNotification } from './components/ErrorNotification';
 import { TodoFilter } from './enums/TodoFilter';
 
-type Filter = 'all' | 'active' | 'completed';
+type Filter = TodoFilter;
 
 export const App: React.FC = () => {
   // eslint-disable-next-line max-len
@@ -77,7 +77,7 @@ export const App: React.FC = () => {
   //#endregion
 
   // #region add, delete
-  function addPost(title: string) {
+  const addPost = (title: string) => {
     setIsInputDisabled(true);
     setErrorMessage('');
     setTempTodo({
@@ -102,9 +102,9 @@ export const App: React.FC = () => {
         setIsInputDisabled(false);
         inputfocus();
       });
-  }
+  };
 
-  function deleteTodo(id: number) {
+  const deleteTodo = (id: number) => {
     setLoadingTodos(prev => ({ ...prev, [id]: true }));
 
     return postService
@@ -120,7 +120,7 @@ export const App: React.FC = () => {
         setLoadingTodos(prev => ({ ...prev, [id]: false }));
         inputfocus();
       });
-  }
+  };
 
   const clearCompletedTodos = async () => {
     const completedTodoIds = todos
